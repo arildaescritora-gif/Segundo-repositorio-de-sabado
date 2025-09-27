@@ -9,6 +9,7 @@ Original file is located at
 
 import streamlit as st
 import numpy as np
+from langchain.tools import Tool
 import zipfile
 import io
 import matplotlib.pyplot as plt
@@ -37,7 +38,7 @@ except KeyError:
     st.stop()
 
 # --- Definição das Ferramentas (Tools) ---
-@tool
+
 def show_descriptive_stats(df):
     """
     Gera estatísticas descritivas para todas as colunas de um DataFrame.
@@ -46,7 +47,7 @@ def show_descriptive_stats(df):
     stats = df.describe(include='all')
     return {"status": "success", "data": stats.to_markdown(), "message": "Estatísticas descritivas geradas."}
 
-@tool
+
 def generate_histogram(df, column: str):
     """
     Gera um histograma para uma coluna numérica específica do DataFrame.
@@ -67,7 +68,7 @@ def generate_histogram(df, column: str):
     plt.close(fig)
     return {"status": "success", "image": buf, "message": f"Histograma para a coluna '{column}' gerado."}
 
-@tool
+
 def generate_correlation_heatmap(df):
     """
     Calcula a matriz de correlação entre as variáveis numéricas do DataFrame
@@ -86,7 +87,7 @@ def generate_correlation_heatmap(df):
     plt.close(fig)
     return {"status": "success", "image": buf, "message": "Mapa de calor da correlação gerado."}
 
-@tool
+
 def generate_scatter_plot(df, x_col: str, y_col: str):
     """
     Gera um gráfico de dispersão (scatter plot) para visualizar a relação entre duas colunas numéricas.
@@ -105,7 +106,7 @@ def generate_scatter_plot(df, x_col: str, y_col: str):
     plt.close(fig)
     return {"status": "success", "image": buf, "message": f"Gráfico de dispersão para '{x_col}' vs '{y_col}' gerado."}
 
-@tool
+
 def detect_outliers_isolation_forest(df):
     """
     Detecta anomalias (outliers) no DataFrame usando o algoritmo Isolation Forest.
@@ -127,7 +128,7 @@ def detect_outliers_isolation_forest(df):
     except Exception as e:
         return {"status": "error", "message": f"Erro ao detectar anomalias: {e}"}
 
-@tool
+
 def find_clusters_kmeans(df, n_clusters: int):
     """
     Realiza agrupamento (clustering) nos dados usando o algoritmo K-Means.
@@ -241,12 +242,36 @@ if uploaded_zip_file and st.session_state.df is None:
         # 2. Ligar o DataFrame às ferramentas (FIX CRÍTICO)
         df_loaded = st.session_state.df
         tools_with_df = [
-            functools.partial(show_descriptive_stats, df=df_loaded),
-            functools.partial(generate_histogram, df=df_loaded),
-            functools.partial(generate_correlation_heatmap, df=df_loaded),
-            functools.partial(generate_scatter_plot, df=df_loaded),
-            functools.partial(detect_outliers_isolation_forest, df=df_loaded),
-            functools.partial(find_clusters_kmeans, df=df_loaded)
+            Tool(
+                name=show_descriptive_stats.__name__,
+                description=show_descriptive_stats.__doc__,
+                func=functools.partial(show_descriptive_stats, df=df_loaded)
+            ),
+            Tool(
+                name=generate_histogram.__name__,
+                description=generate_histogram.__doc__,
+                func=functools.partial(generate_histogram, df=df_loaded)
+            ),
+            Tool(
+                name=generate_correlation_heatmap.__name__,
+                description=generate_correlation_heatmap.__doc__,
+                func=functools.partial(generate_correlation_heatmap, df=df_loaded)
+            ),
+            Tool(
+                name=generate_scatter_plot.__name__,
+                description=generate_scatter_plot.__doc__,
+                func=functools.partial(generate_scatter_plot, df=df_loaded)
+            ),
+            Tool(
+                name=detect_outliers_isolation_forest.__name__,
+                description=detect_outliers_isolation_forest.__doc__,
+                func=functools.partial(detect_outliers_isolation_forest, df=df_loaded)
+            ),
+            Tool(
+                name=find_clusters_kmeans.__name__,
+                description=find_clusters_kmeans.__doc__,
+                func=functools.partial(find_clusters_kmeans, df=df_loaded)
+            )
         ]
 
         # 3. Inicializar a memória e o agente COM AS NOVAS FERRAMENTAS LIGADAS
