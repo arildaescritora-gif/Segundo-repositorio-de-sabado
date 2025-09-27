@@ -241,12 +241,12 @@ if uploaded_zip_file and st.session_state.df is None:
         # 2. Ligar o DataFrame às ferramentas (FIX CRÍTICO)
         df_loaded = st.session_state.df
         tools_with_df = [
-            tool(functools.partial(show_descriptive_stats, df=df_loaded), name=show_descriptive_stats.name, description=show_descriptive_stats.description),
-            tool(functools.partial(generate_histogram, df=df_loaded), name=generate_histogram.name, description=generate_histogram.description),
-            tool(functools.partial(generate_correlation_heatmap, df=df_loaded), name=generate_correlation_heatmap.name, description=generate_correlation_heatmap.description),
-            tool(functools.partial(generate_scatter_plot, df=df_loaded), name=generate_scatter_plot.name, description=generate_scatter_plot.description),
-            tool(functools.partial(detect_outliers_isolation_forest, df=df_loaded), name=detect_outliers_isolation_forest.name, description=detect_outliers_isolation_forest.description),
-            tool(functools.partial(find_clusters_kmeans, df=df_loaded), name=find_clusters_kmeans.name, description=find_clusters_kmeans.description)
+            functools.partial(show_descriptive_stats, df=df_loaded),
+            functools.partial(generate_histogram, df=df_loaded),
+            functools.partial(generate_correlation_heatmap, df=df_loaded),
+            functools.partial(generate_scatter_plot, df=df_loaded),
+            functools.partial(detect_outliers_isolation_forest, df=df_loaded),
+            functools.partial(find_clusters_kmeans, df=df_loaded)
         ]
 
         # 3. Inicializar a memória e o agente COM AS NOVAS FERRAMENTAS LIGADAS
