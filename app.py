@@ -280,29 +280,39 @@ if prompt_input := st.chat_input("Insira sua pergunta sobre os dados..."):
     with st.chat_message("assistant"):
         st_callback = st.empty()
         try:
-          full_response = st.session_state.agent_executor.invoke({"input": prompt_input})
+            # 1. Invocation CORRIGIDA (Modificação A)
+            full_response = st.session_state.agent_executor.invoke({"input": prompt_input})
             response_content = full_response['output']
-
-            # Novo tratamento de resposta para evitar erros de renderização
+            
+           # 2. Tratamento do conteúdo (Modificação B)
             if isinstance(response_content, dict) and "status" in response_content:
                 if response_content["status"] == "success":
+                    
                     if "message" in response_content:
+                        # Exibe a mensagem do LLM
                         st_callback.markdown(response_content["message"])
-                        st.session_state.messages.append({"role": "assistant", "content": response_content["message"]})
+                    
                     if "data" in response_content:
-                        # Convertendo a resposta de markdown para string para garantir a renderização
+                        # Exibe o DataFrame de estatísticas
                         df_display = pd.read_markdown(response_content["data"])
-                        st_callback.dataframe(df_display)
-                        st.session_state.messages.append({"role": "assistant", "content": df_display})
+                        st.dataframe(df_display)
+                        
                     if "image" in response_content:
-                        st_callback.image(response_content["image"], use_column_width=True)
-                        st.session_state.messages.append({"role": "assistant", "content": response_content["image"]})
+                        # Exibe a imagem/gráfico
+                        st.image(response_content["image"], use_column_width=True)
+                    
+                    # Salva APENAS a MENSAGEM de texto na memória do chat (Prevenindo corrupção do DF)
+                    st.session_state.messages.append({"role": "assistant", "content": response_content["message"]})
+                
                 else:
+                    # Caso de erro da ferramenta
                     st_callback.error(response_content["message"])
                     st.session_state.messages.append({"role": "assistant", "content": response_content["message"]})
             else:
+                # Resposta direta do LLM (sem uso de ferramenta)
                 st_callback.markdown(str(response_content))
                 st.session_state.messages.append({"role": "assistant", "content": str(response_content)})
+
         except Exception as e:
             error_message = f"Desculpe, ocorreu um erro na análise: {e}"
             st_callback.error(error_message)
