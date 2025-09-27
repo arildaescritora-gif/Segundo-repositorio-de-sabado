@@ -188,7 +188,7 @@ if 'df' not in st.session_state:
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 if 'agent_executor' not in st.session_state:
-    llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=google_api_key, temperature=0.0)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=google_api_key, temperature=0.0)
     st.session_state.memory = ConversationBufferWindowMemory(k=5, memory_key="chat_history", return_messages=True)
     agent = create_tool_calling_agent(llm, tools, prompt)
     st.session_state.agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=st.session_state.memory)
