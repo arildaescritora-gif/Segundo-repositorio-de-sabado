@@ -37,7 +37,7 @@ except KeyError:
 
 # --- Definição das Ferramentas (Tools) ---
 @tool
-def show_descriptive_stats(df):
+def show_descriptive_stats(df: pd.DataFrame):
     """
     Gera estatísticas descritivas para todas as colunas de um DataFrame.
     Retorna um dicionário com o resumo estatístico.
@@ -46,7 +46,7 @@ def show_descriptive_stats(df):
     return {"status": "success", "data": stats.to_markdown(), "message": "Estatísticas descritivas geradas."}
 
 @tool
-def generate_histogram(df, column: str):
+def generate_histogram(df: pd.DataFrame, column: str):
     """
     Gera um histograma para uma coluna numérica específica do DataFrame.
     A entrada deve ser o nome da coluna.
@@ -67,7 +67,7 @@ def generate_histogram(df, column: str):
     return {"status": "success", "image": buf, "message": f"Histograma para a coluna '{column}' gerado."}
 
 @tool
-def generate_correlation_heatmap(df):
+def generate_correlation_heatmap(df: pd.DataFrame):
     """
     Calcula a matriz de correlação entre as variáveis numéricas do DataFrame
     e gera um mapa de calor (heatmap) para visualização.
@@ -86,7 +86,7 @@ def generate_correlation_heatmap(df):
     return {"status": "success", "image": buf, "message": "Mapa de calor da correlação gerado."}
 
 @tool
-def generate_scatter_plot(df, x_col: str, y_col: str):
+def generate_scatter_plot(df: pd.DataFrame, x_col: str, y_col: str):
     """
     Gera um gráfico de dispersão (scatter plot) para visualizar a relação entre duas colunas numéricas.
     As entradas devem ser os nomes das colunas para os eixos X e Y.
@@ -105,7 +105,7 @@ def generate_scatter_plot(df, x_col: str, y_col: str):
     return {"status": "success", "image": buf, "message": f"Gráfico de dispersão para '{x_col}' vs '{y_col}' gerado."}
 
 @tool
-def detect_outliers_isolation_forest(df):
+def detect_outliers_isolation_forest(df: pd.DataFrame):
     """
     Detecta anomalias (outliers) no DataFrame usando o algoritmo Isolation Forest.
     A análise é aplicada às colunas V1 a V28, 'Time' e 'Amount' do dataset de fraudes.
@@ -127,7 +127,7 @@ def detect_outliers_isolation_forest(df):
         return {"status": "error", "message": f"Erro ao detectar anomalias: {e}"}
 
 @tool
-def find_clusters_kmeans(df, n_clusters: int):
+def find_clusters_kmeans(df: pd.DataFrame, n_clusters: int):
     """
     Realiza agrupamento (clustering) nos dados usando o algoritmo K-Means.
     A análise é aplicada às colunas V1 a V28, 'Time' e 'Amount' do dataset de fraudes.
