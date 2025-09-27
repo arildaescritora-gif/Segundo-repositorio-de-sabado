@@ -234,6 +234,27 @@ if uploaded_zip_file and st.session_state.df is None:
         st.session_state.df = load_result["df"]
         st.success("Dados carregados com sucesso! Aqui está uma pré-visualização:")
         st.dataframe(st.session_state.df.head())
+
+        # 1. Definir o LLM (Modelo e Chave)
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=google_api_key, temperature=0.0)
+
+        # 2. Ligar o DataFrame às ferramentas (FIX CRÍTICO)
+        df_loaded = st.session_state.df
+        tools_with_df = [
+            tool(functools.partial(show_descriptive_stats, df=df_loaded), name=show_descriptive_stats.name, description=show_descriptive_stats.description),
+            tool(functools.partial(generate_histogram, df=df_loaded), name=generate_histogram.name, description=generate_histogram.description),
+            tool(functools.partial(generate_correlation_heatmap, df=df_loaded), name=generate_correlation_heatmap.name, description=generate_correlation_heatmap.description),
+            tool(functools.partial(generate_scatter_plot, df=df_loaded), name=generate_scatter_plot.name, description=generate_scatter_plot.description),
+            tool(functools.partial(detect_outliers_isolation_forest, df=df_loaded), name=detect_outliers_isolation_forest.name, description=detect_outliers_isolation_forest.description),
+            tool(functools.partial(find_clusters_kmeans, df=df_loaded), name=find_clusters_kmeans.name, description=find_clusters_kmeans.description)
+        ]
+
+        # 3. Inicializar a memória e o agente COM AS NOVAS FERRAMENTAS LIGADAS
+        st.session_state.memory = ConversationBufferWindowMemory(k=5, memory_key="chat_history", return_messages=True)
+        agent = create_tool_calling_agent(llm, tools_with_df, prompt)
+        st.session_state.agent_executor = AgentExecutor(agent=agent, tools=tools_with_df, verbose=True, memory=st.session_state.memory)
+        st.success("Agente de IA inicializado e pronto para a análise!")
+
     else:
         st.error(load_result["message"])
 
@@ -259,7 +280,7 @@ if prompt_input := st.chat_input("Insira sua pergunta sobre os dados..."):
     with st.chat_message("assistant"):
         st_callback = st.empty()
         try:
-            full_response = st.session_state.agent_executor.invoke({"input": prompt_input, "df": st.session_state.df})
+          full_response = st.session_state.agent_executor.invoke({"input": prompt_input})
             response_content = full_response['output']
 
             # Novo tratamento de resposta para evitar erros de renderização
