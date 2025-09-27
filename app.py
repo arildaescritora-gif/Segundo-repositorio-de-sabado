@@ -39,20 +39,22 @@ except KeyError:
 
 # --- Definição das Ferramentas (Tools) ---
 
-def show_descriptive_stats(df):
+def show_descriptive_stats():
     """
     Gera estatísticas descritivas para todas as colunas de um DataFrame.
     Retorna um dicionário com o resumo estatístico.
     """
+    df = st.session_state.df
     stats = df.describe(include='all')
     return {"status": "success", "data": stats.to_markdown(), "message": "Estatísticas descritivas geradas."}
 
 
-def generate_histogram(df, column: str):
+def generate_histogram(column: str):
     """
     Gera um histograma para uma coluna numérica específica do DataFrame.
     A entrada deve ser o nome da coluna.
     """
+    df = st.session_state.df
     if column not in df.columns:
         return {"status": "error", "message": f"Erro: A coluna '{column}' não existe no DataFrame."}
     if not pd.api.types.is_numeric_dtype(df[column]):
@@ -69,11 +71,12 @@ def generate_histogram(df, column: str):
     return {"status": "success", "image": buf, "message": f"Histograma para a coluna '{column}' gerado."}
 
 
-def generate_correlation_heatmap(df):
+def generate_correlation_heatmap():
     """
     Calcula a matriz de correlação entre as variáveis numéricas do DataFrame
     e gera um mapa de calor (heatmap) para visualização.
     """
+    df = st.session_state.df
     numeric_cols = df.select_dtypes(include=np.number).columns
     if len(numeric_cols) < 2:
         return {"status": "error", "message": "Erro: O DataFrame não tem colunas numéricas suficientes para calcular a correlação."}
@@ -88,11 +91,12 @@ def generate_correlation_heatmap(df):
     return {"status": "success", "image": buf, "message": "Mapa de calor da correlação gerado."}
 
 
-def generate_scatter_plot(df, x_col: str, y_col: str):
+def generate_scatter_plot(x_col: str, y_col: str):
     """
     Gera um gráfico de dispersão (scatter plot) para visualizar a relação entre duas colunas numéricas.
     As entradas devem ser os nomes das colunas para os eixos X e Y.
     """
+    df = st.session_state.df
     if x_col not in df.columns or y_col not in df.columns:
         return {"status": "error", "message": f"Erro: Uma ou ambas as colunas ('{x_col}', '{y_col}') não existem no DataFrame."}
     fig, ax = plt.subplots()
@@ -107,13 +111,14 @@ def generate_scatter_plot(df, x_col: str, y_col: str):
     return {"status": "success", "image": buf, "message": f"Gráfico de dispersão para '{x_col}' vs '{y_col}' gerado."}
 
 
-def detect_outliers_isolation_forest(df):
+def detect_outliers_isolation_forest():
     """
     Detecta anomalias (outliers) no DataFrame usando o algoritmo Isolation Forest.
     A análise é aplicada às colunas V1 a V28, 'Time' e 'Amount' do dataset de fraudes.
     Retorna o número de anomalias detectadas e uma amostra dos outliers.
     """
     try:
+        df = st.session_state.df
         feature_cols = [col for col in df.columns if col.startswith('V')] + ['Time', 'Amount']
         df_features = df[feature_cols]
         scaler = StandardScaler()
@@ -129,7 +134,7 @@ def detect_outliers_isolation_forest(df):
         return {"status": "error", "message": f"Erro ao detectar anomalias: {e}"}
 
 
-def find_clusters_kmeans(df, n_clusters: int):
+def find_clusters_kmeans(n_clusters: int):
     """
     Realiza agrupamento (clustering) nos dados usando o algoritmo K-Means.
     A análise é aplicada às colunas V1 a V28, 'Time' e 'Amount' do dataset de fraudes.
@@ -137,6 +142,7 @@ def find_clusters_kmeans(df, n_clusters: int):
     Retorna uma descrição dos clusters encontrados.
     """
     try:
+        df = st.session_state.df
         feature_cols = [col for col in df.columns if col.startswith('V')] + ['Time', 'Amount']
         df_features = df[feature_cols]
         scaler = StandardScaler()
@@ -239,41 +245,39 @@ if uploaded_zip_file and st.session_state.df is None:
         # 1. Definir o LLM (Modelo e Chave)
         llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=google_api_key, temperature=0.0)
 
-        # 2. Ligar o DataFrame às ferramentas (FIX CRÍTICO)
-        df_loaded = st.session_state.df
+        # 2. Definir a lista final de ferramentas (FIX FINAL)
         tools_with_df = [
             Tool(
                 name=show_descriptive_stats.__name__,
                 description=show_descriptive_stats.__doc__,
-                func=functools.partial(show_descriptive_stats, df=df_loaded)
+                func=show_descriptive_stats # <--- APENAS A FUNÇÃO, SEM PARTIAL
             ),
             Tool(
                 name=generate_histogram.__name__,
                 description=generate_histogram.__doc__,
-                func=functools.partial(generate_histogram, df=df_loaded)
+                func=generate_histogram
             ),
             Tool(
                 name=generate_correlation_heatmap.__name__,
                 description=generate_correlation_heatmap.__doc__,
-                func=functools.partial(generate_correlation_heatmap, df=df_loaded)
+                func=generate_correlation_heatmap
             ),
             Tool(
                 name=generate_scatter_plot.__name__,
                 description=generate_scatter_plot.__doc__,
-                func=functools.partial(generate_scatter_plot, df=df_loaded)
+                func=generate_scatter_plot
             ),
             Tool(
                 name=detect_outliers_isolation_forest.__name__,
                 description=detect_outliers_isolation_forest.__doc__,
-                func=functools.partial(detect_outliers_isolation_forest, df=df_loaded)
+                func=detect_outliers_isolation_forest
             ),
             Tool(
                 name=find_clusters_kmeans.__name__,
                 description=find_clusters_kmeans.__doc__,
-                func=functools.partial(find_clusters_kmeans, df=df_loaded)
+                func=find_clusters_kmeans
             )
         ]
-
         # 3. Inicializar a memória e o agente COM AS NOVAS FERRAMENTAS LIGADAS
         st.session_state.memory = ConversationBufferWindowMemory(k=5, memory_key="chat_history", return_messages=True)
         agent = create_tool_calling_agent(llm, tools_with_df, prompt)
