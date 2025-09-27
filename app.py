@@ -14,6 +14,7 @@ import io
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import functools
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.tools import tool
@@ -187,11 +188,7 @@ if 'df' not in st.session_state:
     st.session_state.df = None
 if 'messages' not in st.session_state:
     st.session_state.messages = []
-if 'agent_executor' not in st.session_state:
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=google_api_key, temperature=0.0)
-    st.session_state.memory = ConversationBufferWindowMemory(k=5, memory_key="chat_history", return_messages=True)
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    st.session_state.agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=st.session_state.memory)
+
 
 st.title("Agente de Análise de Dados com IA")
 st.markdown("""
